@@ -8,6 +8,7 @@ import {
 } from "../authMock";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
+import { NutstoreLogo } from "./NutstoreLogo";
 
 export type AuthView = "checking" | "choice" | "auto" | "manual" | "validating";
 
@@ -168,14 +169,14 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
 
   return (
     <box flexDirection="column" flexGrow={1} paddingX={1} paddingY={1} gap={1}>
-      <box height={4} flexDirection="row" alignItems="center">
+      <box height={7} flexDirection="row" alignItems="center">
         <box
-          width={34}
+          width={40}
           marginRight={2}
           alignItems="center"
           justifyContent="center"
         >
-          <ascii_font color={props.palette.fg} font="tiny" text="Nutstore" />
+          <NutstoreLogo palette={props.palette} />
         </box>
         <box flexDirection="column" flexGrow={1} justifyContent="center">
           <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>

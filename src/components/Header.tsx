@@ -1,6 +1,7 @@
 import { TextAttributes, type ThemeMode } from "@opentui/core";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
+import { NutstoreLogo } from "./NutstoreLogo";
 
 type HeaderProps = {
   count: number;
@@ -11,20 +12,20 @@ type HeaderProps = {
 
 export function Header(props: HeaderProps): OpenTUIElement {
   return (
-    <box height={4} flexDirection="row" alignItems="center">
+    <box height={7} flexDirection="row" alignItems="center">
       <box
-        width={34}
+        width={40}
         marginRight={2}
         alignItems="center"
         justifyContent="center"
       >
-        <ascii_font color={props.palette.fg} font="tiny" text="Nutstore" />
+        <NutstoreLogo palette={props.palette} />
       </box>
       <box
         flexDirection="column"
         flexGrow={1}
         justifyContent="center"
-        rowGap={2}
+        rowGap={1}
       >
         <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
           WebDAV App Passwords
