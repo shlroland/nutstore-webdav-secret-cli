@@ -6,7 +6,6 @@
     "module": "Preserve",
     "moduleDetection": "force",
     "jsx": "preserve",
-    "jsxImportSource": "@opentui/solid",
     "allowJs": true,
 
     // Bundler mode

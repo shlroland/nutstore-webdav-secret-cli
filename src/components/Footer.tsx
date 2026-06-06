@@ -1,6 +1,7 @@
+import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 
-export function Footer(props: { palette: Palette }) {
+export function Footer(props: { palette: Palette }): OpenTUIElement {
   return (
     <box height={1} flexDirection="row">
       <text fg={props.palette.muted}>

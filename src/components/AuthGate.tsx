@@ -6,6 +6,7 @@ import {
   mockStoredCookie,
   mockValidateCookie,
 } from "../authMock";
+import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 
 export type AuthView = "checking" | "choice" | "auto" | "manual" | "validating";
@@ -15,7 +16,7 @@ type AuthGateProps = {
   palette: Palette;
 };
 
-export function AuthGate(props: AuthGateProps) {
+export function AuthGate(props: AuthGateProps): OpenTUIElement {
   const renderer = useRenderer();
   const [view, setView] = createSignal<AuthView>("checking");
   const [choiceIndex, setChoiceIndex] = createSignal(0);
@@ -221,7 +222,7 @@ type AuthBodyProps = {
   view: AuthView;
 };
 
-function AuthBody(props: AuthBodyProps) {
+function AuthBody(props: AuthBodyProps): OpenTUIElement {
   return (
     <Switch>
       <Match when={props.view === "checking"}>
@@ -266,10 +267,13 @@ function AuthBody(props: AuthBodyProps) {
             Paste the full Cookie header, then press Enter.
           </text>
           <input
+            cursorColor={props.palette.cursor}
             focused
+            focusedTextColor={props.palette.fg}
             onInput={props.onCookieInput}
             onSubmit={props.onManualSubmit}
             placeholder="nutstore_cookie=...; session=..."
+            placeholderColor={props.palette.muted}
             textColor={props.palette.fg}
             value={props.cookieInput}
           />
@@ -309,7 +313,10 @@ const AUTH_CHOICES = [
   },
 ];
 
-function AuthChoiceList(props: { choiceIndex: number; palette: Palette }) {
+function AuthChoiceList(props: {
+  choiceIndex: number;
+  palette: Palette;
+}): OpenTUIElement {
   return (
     <box flexDirection="column" height={5} width={56}>
       <For each={AUTH_CHOICES}>
@@ -340,7 +347,10 @@ function AuthChoiceList(props: { choiceIndex: number; palette: Palette }) {
   );
 }
 
-function AuthError(props: { error: string | null; palette: Palette }) {
+function AuthError(props: {
+  error: string | null;
+  palette: Palette;
+}): OpenTUIElement {
   if (!props.error) {
     return null;
   }

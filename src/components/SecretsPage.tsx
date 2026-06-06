@@ -2,6 +2,7 @@ import type { ThemeMode } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
 import { createMemo, createSignal } from "solid-js";
 import { initialSecrets, WEBDAV_URL } from "../mockSecrets";
+import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import { clamp, copyToClipboard } from "../utils";
 import { Footer } from "./Footer";
@@ -14,7 +15,7 @@ type SecretsPageProps = {
   themeMode: ThemeMode | null;
 };
 
-export function SecretsPage(props: SecretsPageProps) {
+export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
   const renderer = useRenderer();
   const [items, setItems] = createSignal(initialSecrets);
   const [selectedIndex, setSelectedIndex] = createSignal(0);

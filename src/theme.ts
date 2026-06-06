@@ -6,6 +6,7 @@ export type Palette = {
   fg: string;
   muted: string;
   border: string;
+  cursor: string;
   selectedFg: string;
   selectedBg: string;
   danger: string;
@@ -15,6 +16,7 @@ const lightPalette: Palette = {
   fg: "#111827",
   muted: "#4b5563",
   border: "#6b7280",
+  cursor: "#111827",
   selectedFg: "#ffffff",
   selectedBg: "#111827",
   danger: DANGER_FG,
@@ -24,6 +26,7 @@ const darkPalette: Palette = {
   fg: "#f9fafb",
   muted: "#9ca3af",
   border: "#9ca3af",
+  cursor: "#f9fafb",
   selectedFg: "#111827",
   selectedBg: "#f9fafb",
   danger: "#f87171",

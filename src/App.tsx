@@ -2,9 +2,10 @@ import { createMemo, createSignal, Show } from "solid-js";
 import { AuthGate } from "./components/AuthGate";
 import { SecretsPage } from "./components/SecretsPage";
 import { useThemeMode } from "./hooks/useThemeMode";
+import type { OpenTUIElement } from "./opentui-jsx";
 import { getPalette } from "./theme";
 
-export function App() {
+export function App(): OpenTUIElement {
   const themeMode = useThemeMode();
   const palette = createMemo(() => getPalette(themeMode()));
   const [authenticated, setAuthenticated] = createSignal(false);

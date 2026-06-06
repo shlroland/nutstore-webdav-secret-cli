@@ -1,6 +1,7 @@
 import { TextAttributes } from "@opentui/core";
 import { Show } from "solid-js";
 import { ACCOUNT, WEBDAV_URL } from "../mockSecrets";
+import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import type { SecretItem } from "../types";
 import { truncate } from "../utils";
@@ -11,7 +12,7 @@ type SecretDetailProps = {
   palette: Palette;
 };
 
-export function SecretDetail(props: SecretDetailProps) {
+export function SecretDetail(props: SecretDetailProps): OpenTUIElement {
   return (
     <box
       border
@@ -46,7 +47,7 @@ function SecretDetailContent(props: {
   confirmingDelete: boolean;
   item: SecretItem;
   palette: Palette;
-}) {
+}): OpenTUIElement {
   return (
     <box flexDirection="column" gap={1}>
       <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
@@ -98,7 +99,7 @@ function DetailRow(props: {
   palette: Palette;
   value: string;
   maxLength?: number;
-}) {
+}): OpenTUIElement {
   return (
     <box flexDirection="row">
       <text width={9} fg={props.palette.muted}>

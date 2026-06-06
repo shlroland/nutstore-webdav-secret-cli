@@ -1,4 +1,5 @@
 import { For, Show } from "solid-js";
+import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import type { SecretItem } from "../types";
 import { maskPassword, truncate } from "../utils";
@@ -9,7 +10,7 @@ type SecretListProps = {
   selectedIndex: number;
 };
 
-export function SecretList(props: SecretListProps) {
+export function SecretList(props: SecretListProps): OpenTUIElement {
   return (
     <box
       border
