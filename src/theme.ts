@@ -1,0 +1,33 @@
+import type { ThemeMode } from "@opentui/core";
+
+const DANGER_FG = "#dc2626";
+
+export type Palette = {
+  fg: string;
+  muted: string;
+  border: string;
+  selectedFg: string;
+  selectedBg: string;
+  danger: string;
+};
+
+const lightPalette: Palette = {
+  fg: "#111827",
+  muted: "#4b5563",
+  border: "#6b7280",
+  selectedFg: "#ffffff",
+  selectedBg: "#111827",
+  danger: DANGER_FG,
+};
+
+const darkPalette: Palette = {
+  fg: "#f9fafb",
+  muted: "#9ca3af",
+  border: "#9ca3af",
+  selectedFg: "#111827",
+  selectedBg: "#f9fafb",
+  danger: "#f87171",
+};
+
+export const getPalette = (mode: ThemeMode | null): Palette =>
+  mode === "dark" ? darkPalette : lightPalette;
