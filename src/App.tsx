@@ -1,4 +1,4 @@
-import { createMemo, createSignal } from "solid-js";
+import { createMemo, createSignal, Show } from "solid-js";
 import { AuthGate } from "./components/AuthGate";
 import { SecretsPage } from "./components/SecretsPage";
 import { useThemeMode } from "./hooks/useThemeMode";
@@ -9,14 +9,17 @@ export function App() {
   const palette = createMemo(() => getPalette(themeMode()));
   const [authenticated, setAuthenticated] = createSignal(false);
 
-  if (!authenticated()) {
-    return (
-      <AuthGate
-        onAuthenticated={() => setAuthenticated(true)}
-        palette={palette()}
-      />
-    );
-  }
-
-  return <SecretsPage palette={palette()} themeMode={themeMode()} />;
+  return (
+    <Show
+      when={authenticated()}
+      fallback={
+        <AuthGate
+          onAuthenticated={() => setAuthenticated(true)}
+          palette={palette()}
+        />
+      }
+    >
+      <SecretsPage palette={palette()} themeMode={themeMode()} />
+    </Show>
+  );
 }

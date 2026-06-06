@@ -1,6 +1,6 @@
 import { TextAttributes } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
-import { createSignal, onMount } from "solid-js";
+import { For, Match, Switch, createSignal, onMount } from "solid-js";
 import {
   mockAutoDetectCookie,
   mockStoredCookie,
@@ -30,34 +30,52 @@ export function AuthGate(props: AuthGateProps) {
     setView("validating");
     setError(null);
 
-    const valid = await mockValidateCookie(cookie);
-    if (!valid) {
-      setView("manual");
-      setError("Cookie is empty. Paste a Cookie header to continue.");
-      return;
-    }
+    try {
+      const valid = await mockValidateCookie(cookie);
+      if (!valid) {
+        setView("manual");
+        setError("Cookie is empty. Paste a Cookie header to continue.");
+        return;
+      }
 
-    props.onAuthenticated();
+      props.onAuthenticated();
+    } catch {
+      setView("manual");
+      setError("Cookie validation failed. Paste a Cookie header to continue.");
+    }
   };
 
   const checkStoredCookie = async () => {
     setView("checking");
-    const cookie = await mockStoredCookie();
+    setError(null);
 
-    if (!cookie) {
+    try {
+      const cookie = await mockStoredCookie();
+      if (!cookie) {
+        setView("choice");
+        return;
+      }
+
+      setCookieInput(cookie);
+      await authenticateCookie(cookie);
+    } catch {
       setView("choice");
-      return;
+      setError("Stored cookie check failed. Choose another method.");
     }
-
-    await authenticateCookie(cookie);
   };
 
   const autoDetectCookie = async () => {
     setView("auto");
     setError(null);
-    const cookie = await mockAutoDetectCookie();
-    setCookieInput(cookie);
-    await authenticateCookie(cookie);
+
+    try {
+      const cookie = await mockAutoDetectCookie();
+      setCookieInput(cookie);
+      await authenticateCookie(cookie);
+    } catch {
+      setView("choice");
+      setError("Auto detect failed. Choose another method.");
+    }
   };
 
   const selectManualInput = () => {
@@ -65,8 +83,10 @@ export function AuthGate(props: AuthGateProps) {
     setError(null);
   };
 
-  const submitChoice = () => {
-    if (choiceIndex() === 0) {
+  const submitChoiceAt = (index: number) => {
+    setChoiceIndex(index);
+
+    if (index === 0) {
       void autoDetectCookie();
       return;
     }
@@ -74,9 +94,30 @@ export function AuthGate(props: AuthGateProps) {
     selectManualInput();
   };
 
+  const submitChoice = () => {
+    submitChoiceAt(choiceIndex());
+  };
+
+  const moveChoice = (direction: number) => {
+    setChoiceIndex((current) => {
+      const next = current + direction;
+      if (next < 0) {
+        return 1;
+      }
+
+      if (next > 1) {
+        return 0;
+      }
+
+      return next;
+    });
+  };
+
   const submitManualCookie = () => {
     void authenticateCookie(cookieInput());
   };
+
+  const isSubmitKey = (name: string) => name === "enter" || name === "return";
 
   useKeyboard((key) => {
     const name = key.name.toLowerCase();
@@ -86,25 +127,41 @@ export function AuthGate(props: AuthGateProps) {
       return;
     }
 
+    if (view() === "choice" && (name === "up" || name === "k")) {
+      moveChoice(-1);
+      key.preventDefault();
+      return;
+    }
+
+    if (view() === "choice" && (name === "down" || name === "j")) {
+      moveChoice(1);
+      key.preventDefault();
+      return;
+    }
+
     if (view() === "choice" && name === "a") {
       setChoiceIndex(0);
       void autoDetectCookie();
+      key.preventDefault();
       return;
     }
 
     if (view() === "choice" && name === "m") {
       setChoiceIndex(1);
       selectManualInput();
+      key.preventDefault();
       return;
     }
 
-    if (view() === "choice" && name === "enter") {
+    if (view() === "choice" && isSubmitKey(name)) {
       submitChoice();
+      key.preventDefault();
       return;
     }
 
-    if (view() === "manual" && name === "enter") {
+    if (view() === "manual" && isSubmitKey(name)) {
       submitManualCookie();
+      key.preventDefault();
     }
   });
 
@@ -138,8 +195,6 @@ export function AuthGate(props: AuthGateProps) {
           choiceIndex={choiceIndex()}
           cookieInput={cookieInput()}
           error={error()}
-          onChoiceChange={setChoiceIndex}
-          onChoiceSubmit={submitChoice}
           onCookieInput={setCookieInput}
           onManualSubmit={submitManualCookie}
           palette={props.palette}
@@ -160,8 +215,6 @@ type AuthBodyProps = {
   choiceIndex: number;
   cookieInput: string;
   error: string | null;
-  onChoiceChange: (index: number) => void;
-  onChoiceSubmit: () => void;
   onCookieInput: (value: string) => void;
   onManualSubmit: () => void;
   palette: Palette;
@@ -169,114 +222,120 @@ type AuthBodyProps = {
 };
 
 function AuthBody(props: AuthBodyProps) {
-  if (props.view === "checking") {
-    return (
-      <box flexDirection="column" gap={1}>
-        <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-          Checking stored cookie...
-        </text>
-        <text fg={props.palette.muted}>
-          Mock mode: no stored cookie will be found.
-        </text>
-      </box>
-    );
-  }
-
-  if (props.view === "auto") {
-    return (
-      <box flexDirection="column" gap={1}>
-        <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-          Auto detecting browser cookie...
-        </text>
-        <text fg={props.palette.muted}>
-          Mock mode: this simulates reading a local browser session.
-        </text>
-      </box>
-    );
-  }
-
-  if (props.view === "validating") {
-    return (
-      <box flexDirection="column" gap={1}>
-        <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-          Validating cookie...
-        </text>
-        <text fg={props.palette.muted}>
-          Mock mode: any non-empty cookie is accepted.
-        </text>
-      </box>
-    );
-  }
-
-  if (props.view === "manual") {
-    return (
-      <box flexDirection="column" gap={1}>
-        <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-          Paste Nutstore Cookie
-        </text>
-        <text fg={props.palette.muted}>
-          Paste the full Cookie header, then press Enter.
-        </text>
-        <input
-          focused
-          onInput={props.onCookieInput}
-          onSubmit={props.onManualSubmit}
-          placeholder="nutstore_cookie=...; session=..."
-          textColor={props.palette.fg}
-          value={props.cookieInput}
-        />
-        <AuthError error={props.error} palette={props.palette} />
-      </box>
-    );
-  }
-
   return (
-    <box flexDirection="column" gap={1}>
-      <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-        No stored cookie found
-      </text>
-      <text fg={props.palette.muted}>
-        Choose how to provide a Nutstore browser cookie.
-      </text>
+    <Switch>
+      <Match when={props.view === "checking"}>
+        <box flexDirection="column" gap={1}>
+          <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
+            Checking stored cookie...
+          </text>
+          <text fg={props.palette.muted}>
+            Mock mode: no stored cookie will be found.
+          </text>
+        </box>
+      </Match>
 
-      <select
-        descriptionColor={props.palette.muted}
-        focused
-        focusedTextColor={props.palette.fg}
-        height={5}
-        onChange={props.onChoiceChange}
-        onSelect={props.onChoiceSubmit}
-        options={[
-          {
-            name: "Auto detect",
-            description: "Mock browser cookie discovery, then continue",
-            value: "auto",
-          },
-          {
-            name: "Manual input",
-            description: "Paste a Cookie header yourself",
-            value: "manual",
-          },
-        ]}
-        selectedBackgroundColor={props.palette.selectedBg}
-        selectedDescriptionColor={props.palette.selectedFg}
-        selectedIndex={props.choiceIndex}
-        selectedTextColor={props.palette.selectedFg}
-        textColor={props.palette.fg}
-        width={56}
-        wrapSelection
-      />
+      <Match when={props.view === "auto"}>
+        <box flexDirection="column" gap={1}>
+          <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
+            Auto detecting browser cookie...
+          </text>
+          <text fg={props.palette.muted}>
+            Mock mode: this simulates reading a local browser session.
+          </text>
+        </box>
+      </Match>
 
-      <box flexDirection="column" marginTop={1}>
-        <text fg={props.palette.muted}>
-          Auto detect will be wired to browser cookie discovery later.
-        </text>
-        <text fg={props.palette.muted}>
-          Manual input accepts a pasted Cookie header.
-        </text>
-      </box>
+      <Match when={props.view === "validating"}>
+        <box flexDirection="column" gap={1}>
+          <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
+            Validating cookie...
+          </text>
+          <text fg={props.palette.muted}>
+            Mock mode: any non-empty cookie is accepted.
+          </text>
+        </box>
+      </Match>
 
-      <AuthError error={props.error} palette={props.palette} />
+      <Match when={props.view === "manual"}>
+        <box flexDirection="column" gap={1}>
+          <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
+            Paste Nutstore Cookie
+          </text>
+          <text fg={props.palette.muted}>
+            Paste the full Cookie header, then press Enter.
+          </text>
+          <input
+            focused
+            onInput={props.onCookieInput}
+            onSubmit={props.onManualSubmit}
+            placeholder="nutstore_cookie=...; session=..."
+            textColor={props.palette.fg}
+            value={props.cookieInput}
+          />
+          <AuthError error={props.error} palette={props.palette} />
+        </box>
+      </Match>
+
+      <Match when={props.view === "choice"}>
+        <box flexDirection="column" gap={1}>
+          <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
+            No stored cookie found
+          </text>
+          <text fg={props.palette.muted}>
+            Choose how to provide a Nutstore browser cookie.
+          </text>
+
+          <AuthChoiceList
+            choiceIndex={props.choiceIndex}
+            palette={props.palette}
+          />
+
+          <AuthError error={props.error} palette={props.palette} />
+        </box>
+      </Match>
+    </Switch>
+  );
+}
+
+const AUTH_CHOICES = [
+  {
+    name: "Auto detect",
+    description: "Mock browser cookie discovery, then continue",
+  },
+  {
+    name: "Manual input",
+    description: "Paste a Cookie header yourself",
+  },
+];
+
+function AuthChoiceList(props: { choiceIndex: number; palette: Palette }) {
+  return (
+    <box flexDirection="column" height={5} width={56}>
+      <For each={AUTH_CHOICES}>
+        {(choice, index) => {
+          const selected = () => props.choiceIndex === index();
+          const bg = () =>
+            selected() ? props.palette.selectedBg : "transparent";
+          const fg = () =>
+            selected() ? props.palette.selectedFg : props.palette.fg;
+          const mutedFg = () =>
+            selected() ? props.palette.selectedFg : props.palette.muted;
+
+          return (
+            <box flexDirection="column">
+              <text bg={bg()} fg={fg()}>
+                {selected() ? " > " : "   "}
+                {choice.name.padEnd(52, " ")}
+              </text>
+              <text bg={bg()} fg={mutedFg()}>
+                {"   "}
+                {choice.description.padEnd(52, " ")}
+              </text>
+            </box>
+          );
+        }}
+      </For>
     </box>
   );
 }
