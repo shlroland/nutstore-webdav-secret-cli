@@ -11,15 +11,25 @@ type HeaderProps = {
 
 export function Header(props: HeaderProps): OpenTUIElement {
   return (
-    <box height={4} flexDirection="row" alignItems="center" gap={2}>
-      <box width={28} alignItems="center" justifyContent="center">
+    <box height={4} flexDirection="row" alignItems="center">
+      <box
+        width={34}
+        marginRight={2}
+        alignItems="center"
+        justifyContent="center"
+      >
         <ascii_font color={props.palette.fg} font="tiny" text="Nutstore" />
       </box>
-      <box flexDirection="column" flexGrow={1} justifyContent="center" gap={2}>
+      <box
+        flexDirection="column"
+        flexGrow={1}
+        justifyContent="center"
+        rowGap={2}
+      >
         <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
           WebDAV App Passwords
         </text>
-        <text fg={props.palette.muted}>
+        <text fg={props.palette.muted} truncate>
           {props.count} secrets | {props.themeMode ?? "light"} | {props.status}
         </text>
       </box>

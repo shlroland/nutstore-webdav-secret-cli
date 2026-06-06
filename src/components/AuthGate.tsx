@@ -168,15 +168,20 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
 
   return (
     <box flexDirection="column" flexGrow={1} paddingX={1} paddingY={1} gap={1}>
-      <box height={4} flexDirection="row" alignItems="center" gap={2}>
-        <box width={28} alignItems="center" justifyContent="center">
+      <box height={4} flexDirection="row" alignItems="center">
+        <box
+          width={34}
+          marginRight={2}
+          alignItems="center"
+          justifyContent="center"
+        >
           <ascii_font color={props.palette.fg} font="tiny" text="Nutstore" />
         </box>
         <box flexDirection="column" flexGrow={1} justifyContent="center">
           <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
             WebDAV Cookie Setup
           </text>
-          <text fg={props.palette.muted}>
+          <text fg={props.palette.muted} truncate>
             Prepare access before loading app passwords
           </text>
         </box>
