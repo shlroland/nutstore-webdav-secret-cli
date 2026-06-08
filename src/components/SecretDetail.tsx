@@ -60,11 +60,13 @@ function SecretDetailContent(props: {
           maxLength={27}
           palette={props.palette}
           value={WEBDAV_URL}
+          shouldTruncate={false}
         />
         <DetailRow
           label="Account"
           palette={props.palette}
           value={props.item.account ?? "Unavailable"}
+          shouldTruncate={false}
         />
         <DetailRow
           label="Password"
@@ -81,7 +83,12 @@ function SecretDetailContent(props: {
       <Show
         when={props.confirmingDelete}
         fallback={
-          <text fg={props.palette.muted}>Enter copy | U URL | D delete</text>
+          <box flexDirection="row" flexWrap="wrap" columnGap={1}>
+            <ShortcutHint action="copy secret" keyLabel="Enter" palette={props.palette} />
+            <ShortcutHint action="copy URL" keyLabel="U" palette={props.palette} />
+            <ShortcutHint action="copy account" keyLabel="A" palette={props.palette} />
+            <ShortcutHint action="delete" keyLabel="D" palette={props.palette} />
+          </box>
         }
       >
         <box border borderColor={props.palette.danger} paddingX={1}>
@@ -97,15 +104,35 @@ function DetailRow(props: {
   palette: Palette;
   value: string;
   maxLength?: number;
+  shouldTruncate?: boolean;
 }): OpenTUIElement {
   return (
     <box flexDirection="row">
       <text width={9} fg={props.palette.muted}>
         {props.label}
       </text>
-      <text flexGrow={1} fg={props.palette.fg} truncate>
-        {truncate(props.value, props.maxLength ?? 29)}
+      <text flexGrow={1} fg={props.palette.fg} truncate={props.shouldTruncate !== false}>
+        {props.shouldTruncate !== false ? truncate(props.value, props.maxLength ?? 29) : props.value}
       </text>
+    </box>
+  );
+}
+
+function ShortcutHint(props: {
+  action: string;
+  keyLabel: string;
+  palette: Palette;
+}): OpenTUIElement {
+  return (
+    <box flexDirection="row" marginRight={1}>
+      <text
+        attributes={TextAttributes.BOLD}
+        bg={props.palette.selectedBg}
+        fg={props.palette.selectedFg}
+      >
+        {" "}{props.keyLabel}{" "}
+      </text>
+      <text fg={props.palette.muted}> {props.action}</text>
     </box>
   );
 }

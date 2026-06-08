@@ -121,6 +121,16 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
 
     if (name === "u") {
       void copyValue("WebDAV URL", WEBDAV_URL);
+      return;
+    }
+
+    if (name === "a") {
+      if (!item.account) {
+        setStatusMessage("Account unavailable");
+        return;
+      }
+
+      void copyValue("Account", item.account);
     }
   });
 
