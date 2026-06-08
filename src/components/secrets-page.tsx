@@ -2,7 +2,7 @@ import { useAtomRefresh, useAtomSet, useAtomValue } from "@effect/atom-solid";
 import type { ThemeMode } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
 import { createMemo, createSignal } from "solid-js";
-import { addSecretAtom, secretsListAtom, secretsLoadStateAtom, secretsPageInfoAtom, secretsStatusMessageAtom } from "../atom/secrets";
+import { addSecretAtom, deleteSecretAtom, secretsListAtom, secretsLoadStateAtom, secretsPageInfoAtom, secretsStatusMessageAtom } from "../atom/secrets";
 import { WEBDAV_URL } from "../constants";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
@@ -24,6 +24,7 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
   const remoteStatusMessage = useAtomValue(() => secretsStatusMessageAtom);
   const refreshSecrets = useAtomRefresh(() => secretsPageInfoAtom);
   const createSecret = useAtomSet(() => addSecretAtom, { mode: "promise" });
+  const revokeSecret = useAtomSet(() => deleteSecretAtom, { mode: "promise" });
   const [addSecretMode, setAddSecretMode] = createSignal(false);
   const [addSecretName, setAddSecretName] = createSignal("");
   const [addSecretError, setAddSecretError] = createSignal<string | null>(null);
@@ -47,11 +48,11 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
     );
   };
 
-  const refresh = () => {
+  const refresh = (nextSelectedIndex = 0) => {
     setAddSecretMode(false);
     setAddSecretError(null);
     setConfirmingDelete(false);
-    setSelectedIndex(0);
+    setSelectedIndex(nextSelectedIndex);
     setStatusMessage("");
     refreshSecrets();
   };
@@ -61,11 +62,12 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
     setStatusMessage(copied ? `${label} copied` : `${label} ready to copy`);
   };
 
-  const deleteSelected = () => {
+  const deleteSelected = async () => {
     if (addSecretMode()) {
       return;
     }
     const item = selectedItem();
+    const currentIndex = selectedIndex();
     if (!item) {
       return;
     }
@@ -76,8 +78,23 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
       return;
     }
 
-    setConfirmingDelete(false);
-    setStatusMessage(`Delete is not wired yet for ${item.name}`);
+    try {
+      await revokeSecret(item.name);
+      const nextSelectedIndex = clamp(
+        Math.min(currentIndex, Math.max(0, items().length - 2)),
+        0,
+        Math.max(0, items().length - 2),
+      );
+      setConfirmingDelete(false);
+      setStatusMessage(`Deleted ${item.name}`);
+      refresh(nextSelectedIndex);
+    } catch (cause) {
+      setConfirmingDelete(false);
+      setSelectedIndex(currentIndex);
+      setStatusMessage(
+        cause instanceof Error ? cause.message : `Failed to delete ${item.name}`,
+      );
+    }
   };
 
   const openAddSecret = () => {
@@ -102,7 +119,7 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
       setAddSecretMode(false);
       setAddSecretName("");
       setStatusMessage(`Created ${created.name}`);
-      refreshSecrets();
+      refresh();
     } catch (cause) {
       setAddSecretError(
         cause instanceof Error ? cause.message : "Failed to create app password.",
@@ -166,12 +183,12 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
     }
 
     if (name === "d") {
-      deleteSelected();
+      void deleteSelected();
       return;
     }
 
     if (name === "y" && confirmingDelete()) {
-      deleteSelected();
+      void deleteSelected();
       return;
     }
 

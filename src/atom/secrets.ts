@@ -3,6 +3,7 @@ import * as Option from "effect/Option";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
 import { AddSecretHttpError, AddSecretParseError, addSecret } from "../effect/add-secret";
+import { DeleteSecretHttpError, DeleteSecretValidationError, deleteSecret } from "../effect/delete-secret";
 import { MobileAspHttpError, MobileAspParseError, querySecretsList } from "../effect/list-secrets";
 import type { SecretItem } from "../types";
 import { cookieAtom } from "./auth";
@@ -11,6 +12,7 @@ import { runtimeAtom } from "./platform";
 export type SecretsLoadState = "loading" | "ready" | "empty" | "error";
 type SecretsError = MobileAspHttpError | MobileAspParseError;
 export type AddSecretError = MissingCookieError | AddSecretHttpError | AddSecretParseError;
+export type DeleteSecretError = MissingCookieError | DeleteSecretHttpError | DeleteSecretValidationError;
 
 const EMPTY_SECRETS: SecretItem[] = [];
 
@@ -76,5 +78,17 @@ export const addSecretAtom = runtimeAtom.fn((name: string, get) => {
 
   return addSecret(cookie, name).pipe(
     Effect.mapError((error): AddSecretError => error),
+  );
+}).pipe(Atom.keepAlive);
+
+export const deleteSecretAtom = runtimeAtom.fn((name: string, get) => {
+  const cookie = get(cookieAtom);
+
+  if (!cookie) {
+    return Effect.fail<DeleteSecretError>(new MissingCookieError());
+  }
+
+  return deleteSecret(cookie, name).pipe(
+    Effect.mapError((error): DeleteSecretError => error),
   );
 }).pipe(Atom.keepAlive);
