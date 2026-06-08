@@ -72,12 +72,6 @@ function SecretDetailContent(props: {
           palette={props.palette}
           value={props.item.createdAt}
         />
-        <DetailRow
-          label="Used"
-          palette={props.palette}
-          value={props.item.lastUsedAt}
-        />
-        <DetailRow label="Note" palette={props.palette} value={props.item.note} />
       </box>
 
       <Show
