@@ -1,6 +1,6 @@
 import { TextAttributes } from "@opentui/core";
 import { Show } from "solid-js";
-import { ACCOUNT, WEBDAV_URL } from "../mockSecrets";
+import { WEBDAV_URL } from "../constants";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import type { SecretItem } from "../types";
@@ -50,8 +50,8 @@ function SecretDetailContent(props: {
 }): OpenTUIElement {
   return (
     <box flexDirection="column" gap={1}>
-      <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-        {props.item.name}
+      <text attributes={TextAttributes.BOLD} fg={props.palette.fg} truncate>
+        {truncate(props.item.name, 36)}
       </text>
 
       <box flexDirection="column">
@@ -61,7 +61,11 @@ function SecretDetailContent(props: {
           palette={props.palette}
           value={WEBDAV_URL}
         />
-        <DetailRow label="Account" palette={props.palette} value={ACCOUNT} />
+        <DetailRow
+          label="Account"
+          palette={props.palette}
+          value={props.item.account ?? "Unavailable"}
+        />
         <DetailRow
           label="Password"
           palette={props.palette}

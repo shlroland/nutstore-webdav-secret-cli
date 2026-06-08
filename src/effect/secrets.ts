@@ -38,8 +38,9 @@ export const parseSecretsHtml = (html: string): SecretItem[] => {
 
   const rawUserAsps = decodeJsSingleQuotedString(userAspsLiteral);
   const records = parseMobileAspRecords(rawUserAsps);
+  const account = parseAccountFromHtml(html);
 
-  return records.map(toSecretItem);
+  return records.map((record) => toSecretItem(record, account));
 };
 
 export const querySecretsList = (
@@ -103,6 +104,23 @@ function formatHtmlSnippet(html: string): string {
     .slice(0, 160);
 }
 
+function parseAccountFromHtml(html: string): string | undefined {
+  const patterns = [
+    /(?:account|username|userName|loginName|email)\s*[:=]\s*["']([^"'@\s]+@[^"'\s]+)["']/i,
+    /(?:用户名|账号|邮箱)[^<]{0,20}[:：]\s*([^<\s]+@[^<\s]+)/i,
+    /value=["']([^"'@\s]+@[^"'\s]+)["']/i,
+  ];
+
+  for (const pattern of patterns) {
+    const matched = html.match(pattern)?.[1]?.trim();
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return html.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+}
+
 function parseMobileAspRecords(value: string): MobileAspRecord[] {
   const parsed = JSON.parse(value) as unknown;
 
@@ -129,10 +147,11 @@ function parseMobileAspRecords(value: string): MobileAspRecord[] {
   });
 }
 
-function toSecretItem(record: MobileAspRecord): SecretItem {
+function toSecretItem(record: MobileAspRecord, account?: string): SecretItem {
   const normalizedName = record.name.trim() || "Untitled App Password";
 
   return {
+    account,
     id: `secret_${record.creationTime}_${normalizedName}`,
     name: normalizedName,
     password: record.credential,

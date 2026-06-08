@@ -3,7 +3,7 @@ import type { ThemeMode } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
 import { createMemo, createSignal } from "solid-js";
 import { secretsListAtom, secretsLoadStateAtom, secretsPageInfoAtom, secretsStatusMessageAtom } from "../atom/secrets";
-import { WEBDAV_URL } from "../mockSecrets";
+import { WEBDAV_URL } from "../constants";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import { clamp, copyToClipboard } from "../utils";

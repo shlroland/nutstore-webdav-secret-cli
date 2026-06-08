@@ -20,9 +20,10 @@ export function SecretList(props: SecretListProps): OpenTUIElement {
       border
       borderColor={props.palette.border}
       flexDirection="column"
+      flexShrink={0}
       paddingX={1}
       title="Secrets"
-      width={34}
+      width={44}
     >
       <Switch
         fallback={
@@ -32,14 +33,22 @@ export function SecretList(props: SecretListProps): OpenTUIElement {
               const prefix = () => String(index() + 1).padStart(2, "0");
 
               return (
-                <text
-                  bg={selected() ? props.palette.selectedBg : undefined}
-                  fg={selected() ? props.palette.selectedFg : props.palette.fg}
-                  truncate
-                >
-                  {prefix()}  {truncate(item.name.padEnd(14), 14)}{" "}
-                  {maskPassword(item.password)}
-                </text>
+                <box flexDirection="row" justifyContent="space-between">
+                  <text
+                    bg={selected() ? props.palette.selectedBg : undefined}
+                    fg={selected() ? props.palette.selectedFg : props.palette.fg}
+                    flexGrow={1}
+                    truncate
+                  >
+                    {prefix()}  {truncate(item.name.padEnd(18), 18)}{" "}
+
+                  </text>
+                  <text
+                    truncate>
+                    {maskPassword(item.password).padStart(12)}
+                  </text>
+                </box>
+
               );
             }}
           </For>
