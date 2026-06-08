@@ -3,12 +3,12 @@ import { FileSystem } from 'effect/FileSystem'
 import path from 'node:path'
 import os from 'node:os'
 
-class ConfigFileError extends Data.TaggedError('ConfigFileError')<{
+export class ConfigFileError extends Data.TaggedError('ConfigFileError')<{
   readonly cause: unknown
   readonly message: string
 }> { }
 
-class CookieNotFoundError extends Data.TaggedError('CookieNotFoundError') { }
+export class CookieNotFoundError extends Data.TaggedError('CookieNotFoundError') { }
 
 const resolveConfigPaths = Effect.sync(function () {
   const configDir = path.join(os.homedir(), '.config', 'nswds')
