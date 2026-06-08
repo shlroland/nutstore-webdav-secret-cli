@@ -1,68 +1,36 @@
+import { useAtomSet } from "@effect/atom-solid";
 import { TextAttributes } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
-import { For, Match, Switch, createSignal, onMount } from "solid-js";
-import {
-  mockAutoDetectCookie,
-  mockStoredCookie,
-  mockValidateCookie,
-} from "../authMock";
+import { For, Match, Show, Switch, createSignal } from "solid-js";
+import { saveCookieAtom } from "../atom/auth";
+import { mockAutoDetectCookie } from "../authMock";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import { NutstoreLogo } from "./NutstoreLogo";
 
-export type AuthView = "checking" | "choice" | "auto" | "manual" | "validating";
+export type AuthView = "choice" | "auto" | "manual" | "validating";
 
 type AuthGateProps = {
-  onAuthenticated: () => void;
   palette: Palette;
 };
 
 export function AuthGate(props: AuthGateProps): OpenTUIElement {
   const renderer = useRenderer();
-  const [view, setView] = createSignal<AuthView>("checking");
+  const saveCookie = useAtomSet(() => saveCookieAtom, { mode: "promise" });
+  const [view, setView] = createSignal<AuthView>("choice");
   const [choiceIndex, setChoiceIndex] = createSignal(0);
   const [cookieInput, setCookieInput] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
 
-  onMount(() => {
-    void checkStoredCookie();
-  });
-
-  const authenticateCookie = async (cookie: string) => {
+  const persistCookie = async (cookie: string) => {
     setView("validating");
     setError(null);
 
     try {
-      const valid = await mockValidateCookie(cookie);
-      if (!valid) {
-        setView("manual");
-        setError("Cookie is empty. Paste a Cookie header to continue.");
-        return;
-      }
-
-      props.onAuthenticated();
-    } catch {
+      await saveCookie(cookie);
+    } catch (cause) {
       setView("manual");
-      setError("Cookie validation failed. Paste a Cookie header to continue.");
-    }
-  };
-
-  const checkStoredCookie = async () => {
-    setView("checking");
-    setError(null);
-
-    try {
-      const cookie = await mockStoredCookie();
-      if (!cookie) {
-        setView("choice");
-        return;
-      }
-
-      setCookieInput(cookie);
-      await authenticateCookie(cookie);
-    } catch {
-      setView("choice");
-      setError("Stored cookie check failed. Choose another method.");
+      setError(cause instanceof Error ? cause.message : "Cookie validation failed. Paste a Cookie header to continue.");
     }
   };
 
@@ -73,7 +41,7 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
     try {
       const cookie = await mockAutoDetectCookie();
       setCookieInput(cookie);
-      await authenticateCookie(cookie);
+      await persistCookie(cookie);
     } catch {
       setView("choice");
       setError("Auto detect failed. Choose another method.");
@@ -116,7 +84,7 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
   };
 
   const submitManualCookie = () => {
-    void authenticateCookie(cookieInput());
+    void persistCookie(cookieInput());
   };
 
   const isSubmitKey = (name: string) => name === "enter" || name === "return";
@@ -231,17 +199,6 @@ type AuthBodyProps = {
 function AuthBody(props: AuthBodyProps): OpenTUIElement {
   return (
     <Switch>
-      <Match when={props.view === "checking"}>
-        <box flexDirection="column" gap={1}>
-          <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-            Checking stored cookie...
-          </text>
-          <text fg={props.palette.muted}>
-            Mock mode: no stored cookie will be found.
-          </text>
-        </box>
-      </Match>
-
       <Match when={props.view === "auto"}>
         <box flexDirection="column" gap={1}>
           <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
@@ -338,12 +295,11 @@ function AuthChoiceList(props: {
           return (
             <box flexDirection="column">
               <text bg={bg()} fg={fg()}>
-                {selected() ? " > " : "   "}
-                {choice.name.padEnd(52, " ")}
+                {selected() ? ">" : " "} {choice.name}
               </text>
-              <text bg={bg()} fg={mutedFg()}>
-                {"   "}
-                {choice.description.padEnd(52, " ")}
+              <text bg={bg()} fg={mutedFg()} truncate>
+                {"  "}
+                {choice.description}
               </text>
             </box>
           );
@@ -357,9 +313,11 @@ function AuthError(props: {
   error: string | null;
   palette: Palette;
 }): OpenTUIElement {
-  if (!props.error) {
-    return null;
-  }
-
-  return <text fg={props.palette.danger}>{props.error}</text>;
+  return (
+    <Show when={props.error}>
+      <text fg={props.palette.danger}>
+        {props.error}
+      </text>
+    </Show>
+  );
 }
