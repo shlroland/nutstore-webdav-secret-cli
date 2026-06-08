@@ -1,53 +1,56 @@
-import { fonts } from "@opentui/core";
-import { For } from "solid-js";
+import { TextAttributes } from "@opentui/core";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
-
-const LOGO_TEXT = "Nutstore";
-const LOGO_FONT = fonts.grid;
-const COLOR_TAG_PATTERN = /<\/?c\d+>/g;
 
 type NutstoreLogoProps = {
   palette: Palette;
 };
 
-export function NutstoreLogo(props: NutstoreLogoProps): OpenTUIElement {
-  const lines = renderLogoLines();
+const MARK_LINES = [
+  ["  ▗▄▄▄  ", "brand"],
+  [" ▟████▙ ", "brand"],
+  [" ███▀▀  ", "accent"],
+  [" ▜████▛ ", "brand"],
+  ["  ▝▀▀▘  ", "muted"],
+] as const;
 
+const WORDMARK_LINES = [
+  "NUTSTORE",
+  "Personal cloud,",
+  "without the noise",
+] as const;
+
+export function NutstoreLogo(props: NutstoreLogoProps): OpenTUIElement {
   return (
-    <box flexDirection="column">
-      <For each={lines}>
-        {(line, index) => (
-          <text fg={gradientColor(props.palette.brandLogo, index(), lines.length)}>
-            {line}
-          </text>
-        )}
-      </For>
+    <box alignItems="center" flexDirection="row" gap={2}>
+      <box flexDirection="column">
+        {MARK_LINES.map(([line, tone]) => (
+          <text fg={toneColor(props.palette, tone)}>{line}</text>
+        ))}
+      </box>
+
+      <box flexDirection="column" justifyContent="center">
+        <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
+          {WORDMARK_LINES[0]}
+        </text>
+        <text fg={props.palette.muted}>{WORDMARK_LINES[1]}</text>
+        <text fg={props.palette.muted}>{WORDMARK_LINES[2]}</text>
+      </box>
     </box>
   );
 }
 
-function renderLogoLines(): string[] {
-  return Array.from({ length: LOGO_FONT.lines }, (_, lineIndex) =>
-    LOGO_TEXT.toUpperCase()
-      .split("")
-      .map((letter) => {
-        const glyph = LOGO_FONT.chars[letter as keyof typeof LOGO_FONT.chars];
-        return (glyph?.[lineIndex] ?? "").replace(COLOR_TAG_PATTERN, "");
-      })
-      .join(" ".repeat(LOGO_FONT.letterspace_size)),
-  );
-}
-
-function gradientColor(colors: string[], index: number, total: number): string {
-  if (colors.length === 0) {
-    return "#D89F44";
+function toneColor(
+  palette: Palette,
+  tone: "brand" | "accent" | "muted",
+): string {
+  if (tone === "muted") {
+    return palette.muted;
   }
 
-  if (total <= 1) {
-    return colors[0] ?? "#D89F44";
+  if (tone === "accent") {
+    return palette.brandLogo[3] ?? palette.fg;
   }
 
-  const colorIndex = Math.round((index * (colors.length - 1)) / (total - 1));
-  return colors[colorIndex] ?? colors[0] ?? "#D89F44";
+  return palette.brandLogo[1] ?? palette.fg;
 }
