@@ -2,6 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
+import { AddSecretHttpError, AddSecretParseError, addSecret } from "../effect/add-secret";
 import { MobileAspHttpError, MobileAspParseError, querySecretsList } from "../effect/list-secrets";
 import type { SecretItem } from "../types";
 import { cookieAtom } from "./auth";
@@ -9,8 +10,15 @@ import { runtimeAtom } from "./platform";
 
 export type SecretsLoadState = "loading" | "ready" | "empty" | "error";
 type SecretsError = MobileAspHttpError | MobileAspParseError;
+export type AddSecretError = MissingCookieError | AddSecretHttpError | AddSecretParseError;
 
 const EMPTY_SECRETS: SecretItem[] = [];
+
+class MissingCookieError extends Error {
+  constructor() {
+    super("Cookie unavailable. Re-authenticate before creating an app password.");
+  }
+}
 
 export const secretsPageInfoAtom: Atom.Atom<
   AsyncResult.AsyncResult<SecretItem[], SecretsError>
@@ -57,4 +65,16 @@ export const secretsStatusMessageAtom = Atom.make((get): string => {
   }
 
   return `Loaded ${result.value.length} app passwords`;
+}).pipe(Atom.keepAlive);
+
+export const addSecretAtom = runtimeAtom.fn((name: string, get) => {
+  const cookie = get(cookieAtom);
+
+  if (!cookie) {
+    return Effect.fail<AddSecretError>(new MissingCookieError());
+  }
+
+  return addSecret(cookie, name).pipe(
+    Effect.mapError((error): AddSecretError => error),
+  );
 }).pipe(Atom.keepAlive);

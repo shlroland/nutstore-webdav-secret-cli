@@ -7,8 +7,14 @@ import type { SecretItem } from "../types";
 import { truncate } from "../utils";
 
 type SecretDetailProps = {
+  addName: string;
+  addSecretMode: boolean;
+  addError: string | null;
+  addingSecret: boolean;
   confirmingDelete: boolean;
   item: SecretItem | null;
+  onAddNameInput: (value: string) => void;
+  onAddSubmit: () => void;
   palette: Palette;
 };
 
@@ -21,24 +27,77 @@ export function SecretDetail(props: SecretDetailProps): OpenTUIElement {
       flexGrow={1}
       paddingX={2}
       paddingY={1}
-      title={props.confirmingDelete ? "Confirm Delete" : "Detail"}
+      title={props.addSecretMode ? "Add Secret" : props.confirmingDelete ? "Confirm Delete" : "Detail"}
     >
-      <Show
-        when={props.item !== null}
-        fallback={
-          <box flexGrow={1} alignItems="center" justifyContent="center">
-            <text fg={props.palette.muted}>
-              Select an app password to inspect
-            </text>
-          </box>
-        }
-      >
-        <SecretDetailContent
-          confirmingDelete={props.confirmingDelete}
-          item={props.item as SecretItem}
+      <Show when={props.addSecretMode}>
+        <AddSecretContent
+          addError={props.addError}
+          addName={props.addName}
+          addingSecret={props.addingSecret}
+          onAddNameInput={props.onAddNameInput}
+          onAddSubmit={props.onAddSubmit}
           palette={props.palette}
         />
       </Show>
+      <Show when={!props.addSecretMode}>
+        <Show
+          when={props.item !== null}
+          fallback={
+            <box flexGrow={1} alignItems="center" justifyContent="center">
+              <text fg={props.palette.muted}>
+                Select an app password to inspect
+              </text>
+            </box>
+          }
+        >
+          <SecretDetailContent
+            confirmingDelete={props.confirmingDelete}
+            item={props.item as SecretItem}
+            palette={props.palette}
+          />
+        </Show>
+      </Show>
+    </box>
+  );
+}
+
+function AddSecretContent(props: {
+  addError: string | null;
+  addName: string;
+  addingSecret: boolean;
+  onAddNameInput: (value: string) => void;
+  onAddSubmit: () => void;
+  palette: Palette;
+}): OpenTUIElement {
+  return (
+    <box flexDirection="column" gap={1}>
+      <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
+        Create App Password
+      </text>
+      <text fg={props.palette.muted}>
+        Enter a name, then press Enter to create a new app password.
+      </text>
+      <input
+        cursorColor={props.palette.cursor}
+        focused
+        focusedTextColor={props.palette.fg}
+        onInput={props.onAddNameInput}
+        onSubmit={props.onAddSubmit}
+        placeholder="NICE-APP-PASSWORD"
+        placeholderColor={props.palette.muted}
+        textColor={props.palette.fg}
+        value={props.addName}
+      />
+      <Show when={props.addingSecret}>
+        <text fg={props.palette.muted}>Creating app password...</text>
+      </Show>
+      <Show when={props.addError}>
+        <text fg={props.palette.danger}>{props.addError}</text>
+      </Show>
+      <box flexDirection="row" flexWrap="wrap" columnGap={1}>
+        <ShortcutHint action="create secret" keyLabel="Enter" palette={props.palette} />
+        <ShortcutHint action="cancel" keyLabel="Esc" palette={props.palette} />
+      </box>
     </box>
   );
 }
@@ -87,6 +146,7 @@ function SecretDetailContent(props: {
             <ShortcutHint action="copy secret" keyLabel="Enter" palette={props.palette} />
             <ShortcutHint action="copy URL" keyLabel="U" palette={props.palette} />
             <ShortcutHint action="copy account" keyLabel="A" palette={props.palette} />
+            <ShortcutHint action="new secret" keyLabel="N" palette={props.palette} />
             <ShortcutHint action="delete" keyLabel="D" palette={props.palette} />
           </box>
         }
