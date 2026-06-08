@@ -1,7 +1,9 @@
+import { useAtomRefresh, useAtomValue } from "@effect/atom-solid";
 import type { ThemeMode } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
 import { createMemo, createSignal } from "solid-js";
-import { initialSecrets, WEBDAV_URL } from "../mockSecrets";
+import { secretsListAtom, secretsLoadStateAtom, secretsPageInfoAtom, secretsStatusMessageAtom } from "../atom/secrets";
+import { WEBDAV_URL } from "../mockSecrets";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import { clamp, copyToClipboard } from "../utils";
@@ -17,14 +19,18 @@ type SecretsPageProps = {
 
 export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
   const renderer = useRenderer();
-  const [items, setItems] = createSignal(initialSecrets);
+  const items = useAtomValue(() => secretsListAtom);
+  const secretsLoadState = useAtomValue(() => secretsLoadStateAtom);
+  const remoteStatusMessage = useAtomValue(() => secretsStatusMessageAtom);
+  const refreshSecrets = useAtomRefresh(() => secretsPageInfoAtom);
   const [selectedIndex, setSelectedIndex] = createSignal(0);
-  const [statusMessage, setStatusMessage] = createSignal(
-    "Authenticated with mock cookie",
-  );
+  const [statusMessage, setStatusMessage] = createSignal("");
   const [confirmingDelete, setConfirmingDelete] = createSignal(false);
 
   const selectedItem = createMemo(() => items()[selectedIndex()] ?? null);
+  const headerStatus = createMemo(() =>
+    statusMessage().length > 0 ? statusMessage() : remoteStatusMessage(),
+  );
 
   const moveSelection = (direction: number) => {
     setConfirmingDelete(false);
@@ -35,9 +41,9 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
 
   const refresh = () => {
     setConfirmingDelete(false);
-    setItems(initialSecrets);
     setSelectedIndex(0);
-    setStatusMessage(`Refreshed ${initialSecrets.length} mock secrets`);
+    setStatusMessage("");
+    refreshSecrets();
   };
 
   const copyValue = async (label: string, value: string) => {
@@ -57,13 +63,8 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
       return;
     }
 
-    const nextItems = items().filter((secret) => secret.id !== item.id);
-    setItems(nextItems);
-    setSelectedIndex((current) =>
-      clamp(current, 0, Math.max(0, nextItems.length - 1)),
-    );
     setConfirmingDelete(false);
-    setStatusMessage(`Deleted ${item.name}`);
+    setStatusMessage(`Delete is not wired yet for ${item.name}`);
   };
 
   useKeyboard((key) => {
@@ -109,7 +110,7 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
     }
 
     const item = selectedItem();
-    if (!item) {
+    if (!item || secretsLoadState() !== "ready") {
       return;
     }
 
@@ -128,13 +129,12 @@ export function SecretsPage(props: SecretsPageProps): OpenTUIElement {
       <Header
         count={items().length}
         palette={props.palette}
-        status={statusMessage()}
+        status={headerStatus()}
         themeMode={props.themeMode}
       />
 
       <box flexDirection="row" flexGrow={1} gap={1} minHeight={14}>
         <SecretList
-          items={items()}
           palette={props.palette}
           selectedIndex={selectedIndex()}
         />

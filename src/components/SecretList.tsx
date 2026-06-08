@@ -1,16 +1,20 @@
-import { For, Show } from "solid-js";
+import { useAtomValue } from "@effect/atom-solid";
+import { For, Match, Switch } from "solid-js";
+import { secretsListAtom, secretsLoadStateAtom, secretsStatusMessageAtom } from "../atom/secrets";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
-import type { SecretItem } from "../types";
 import { maskPassword, truncate } from "../utils";
 
 type SecretListProps = {
-  items: SecretItem[];
   palette: Palette;
   selectedIndex: number;
 };
 
 export function SecretList(props: SecretListProps): OpenTUIElement {
+  const items = useAtomValue(() => secretsListAtom);
+  const loadState = useAtomValue(() => secretsLoadStateAtom);
+  const statusMessage = useAtomValue(() => secretsStatusMessageAtom);
+
   return (
     <box
       border
@@ -20,32 +24,46 @@ export function SecretList(props: SecretListProps): OpenTUIElement {
       title="Secrets"
       width={34}
     >
-      <Show
-        when={props.items.length > 0}
+      <Switch
         fallback={
+          <For each={items()}>
+            {(item, index) => {
+              const selected = () => index() === props.selectedIndex;
+              const prefix = () => String(index() + 1).padStart(2, "0");
+
+              return (
+                <text
+                  bg={selected() ? props.palette.selectedBg : undefined}
+                  fg={selected() ? props.palette.selectedFg : props.palette.fg}
+                  truncate
+                >
+                  {prefix()}  {truncate(item.name.padEnd(14), 14)}{" "}
+                  {maskPassword(item.password)}
+                </text>
+              );
+            }}
+          </For>
+        }
+      >
+        <Match when={loadState() === "loading"}>
+          <box flexGrow={1} alignItems="center" justifyContent="center">
+            <text fg={props.palette.muted}>Loading app passwords...</text>
+          </box>
+        </Match>
+        <Match when={loadState() === "error"}>
+          <box flexDirection="column" flexGrow={1} justifyContent="center" paddingX={1}>
+            <text fg={props.palette.muted}>Failed to load app passwords</text>
+            <text fg={props.palette.muted} truncate>
+              {statusMessage()}
+            </text>
+          </box>
+        </Match>
+        <Match when={loadState() === "empty"}>
           <box flexGrow={1} alignItems="center" justifyContent="center">
             <text fg={props.palette.muted}>No app passwords</text>
           </box>
-        }
-      >
-        <For each={props.items}>
-          {(item, index) => {
-            const selected = () => index() === props.selectedIndex;
-            const prefix = () => String(index() + 1).padStart(2, "0");
-
-            return (
-              <text
-                bg={selected() ? props.palette.selectedBg : undefined}
-                fg={selected() ? props.palette.selectedFg : props.palette.fg}
-                truncate
-              >
-                {prefix()}  {truncate(item.name.padEnd(14), 14)}{" "}
-                {maskPassword(item.password)}
-              </text>
-            );
-          }}
-        </For>
-      </Show>
+        </Match>
+      </Switch>
     </box>
   );
 }

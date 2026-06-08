@@ -3,18 +3,16 @@ import { FetchHttpClient, HttpClient } from "effect/unstable/http";
 import type { SecretItem } from "../types";
 
 const MOBILE_ASP_URL = "https://www.jianguoyun.com/d/mobile_asp";
-const PAGE_INFO_PATTERN = /var\s+PageInfo\s*=\s*\{[\s\S]*?\}/;
-const COPY_ENABLED_PATTERN = /copyEnabled\s*:\s*(true|false)/;
 const USER_ASPS_PATTERN = /userAspsStr\s*:\s*'((?:\\'|[^'])*)'/;
 
 export class MobileAspHttpError extends Data.TaggedError("MobileAspHttpError")<{
   readonly cause: unknown;
   readonly message: string;
-}> {}
+}> { }
 
 export class MobileAspParseError extends Data.TaggedError("MobileAspParseError")<{
   readonly message: string;
-}> {}
+}> { }
 
 export type MobileAspRecord = {
   credential: string;
@@ -22,25 +20,12 @@ export type MobileAspRecord = {
   name: string;
 };
 
-export type MobileAspPageInfo = {
-  copyEnabled: boolean;
-  secrets: SecretItem[];
-};
+export const parseSecretsHtml = (html: string): SecretItem[] => {
+  const userAspsMatch = html.match(USER_ASPS_PATTERN);
 
-export const parseSecretsHtml = (html: string): MobileAspPageInfo => {
-  const pageInfoBlock = html.match(PAGE_INFO_PATTERN)?.[0];
-  if (!pageInfoBlock) {
+  if (!userAspsMatch) {
     throw new MobileAspParseError({
-      message: "Could not find PageInfo in mobile_asp HTML.",
-    });
-  }
-
-  const copyEnabledMatch = pageInfoBlock.match(COPY_ENABLED_PATTERN);
-  const userAspsMatch = pageInfoBlock.match(USER_ASPS_PATTERN);
-
-  if (!copyEnabledMatch || !userAspsMatch) {
-    throw new MobileAspParseError({
-      message: "Could not extract copyEnabled or userAspsStr from PageInfo.",
+      message: "Could not extract userAspsStr from mobile_asp HTML.",
     });
   }
 
@@ -54,15 +39,14 @@ export const parseSecretsHtml = (html: string): MobileAspPageInfo => {
   const rawUserAsps = decodeJsSingleQuotedString(userAspsLiteral);
   const records = parseMobileAspRecords(rawUserAsps);
 
-  return {
-    copyEnabled: copyEnabledMatch[1] === "true",
-    secrets: records.map(toSecretItem),
-  };
+  return records.map(toSecretItem);
 };
 
-export const querySecretsList = (cookie: string) =>
+export const querySecretsList = (
+  cookie: string,
+): Effect.Effect<SecretItem[], MobileAspHttpError | MobileAspParseError> =>
   Effect.gen(function* () {
-    const client = HttpClient.filterStatusOk(yield* HttpClient.HttpClient);
+    const client = yield* HttpClient.HttpClient;
     const response = yield* client.get(MOBILE_ASP_URL, {
       headers: {
         Cookie: cookie,
@@ -86,14 +70,23 @@ export const querySecretsList = (cookie: string) =>
       ),
     );
 
+    if (response.status < 200 || response.status >= 300) {
+      return yield* Effect.fail(
+        new MobileAspHttpError({
+          cause: response.status,
+          message: `mobile_asp returned ${response.status}: ${formatHtmlSnippet(html)}`,
+        }),
+      );
+    }
+
     return yield* Effect.try({
       try: () => parseSecretsHtml(html),
       catch: (cause) =>
         cause instanceof MobileAspParseError
           ? cause
           : new MobileAspParseError({
-              message: "Failed to parse Nutstore mobile_asp HTML.",
-            }),
+            message: `Failed to parse Nutstore mobile_asp HTML: ${formatHtmlSnippet(html)}`,
+          }),
     });
   }).pipe(Effect.provide(FetchHttpClient.layer));
 
@@ -101,6 +94,13 @@ function decodeJsSingleQuotedString(value: string): string {
   return value
     .replace(/\\\\/g, "\\")
     .replace(/\\'/g, "'");
+}
+
+function formatHtmlSnippet(html: string): string {
+  return html
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
 }
 
 function parseMobileAspRecords(value: string): MobileAspRecord[] {

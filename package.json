@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --watch src/index.tsx"
+    "dev": "bun run --watch src/index.tsx",
+    "debug": "OTUI_USE_ALTERNATE_SCREEN=false OTUI_USE_CONSOLE=true SHOW_CONSOLE=true bun run --watch src/index.tsx"
   },
   "devDependencies": {
     "@types/bun": "latest"
