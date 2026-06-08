@@ -1,14 +1,13 @@
 import { useAtomSet } from "@effect/atom-solid";
 import { TextAttributes } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
-import { For, Match, Show, Switch, createSignal } from "solid-js";
+import { Match, Show, Switch, createSignal } from "solid-js";
 import { saveCookieAtom } from "../atom/auth";
-import { mockAutoDetectCookie } from "../authMock";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import { NutstoreLogo } from "./NutstoreLogo";
 
-export type AuthView = "choice" | "auto" | "manual" | "validating";
+export type AuthView = "choice" | "manual" | "validating";
 
 type AuthGateProps = {
   palette: Palette;
@@ -18,7 +17,6 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
   const renderer = useRenderer();
   const saveCookie = useAtomSet(() => saveCookieAtom, { mode: "promise" });
   const [view, setView] = createSignal<AuthView>("choice");
-  const [choiceIndex, setChoiceIndex] = createSignal(0);
   const [cookieInput, setCookieInput] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
 
@@ -34,53 +32,13 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
     }
   };
 
-  const autoDetectCookie = async () => {
-    setView("auto");
-    setError(null);
-
-    try {
-      const cookie = await mockAutoDetectCookie();
-      setCookieInput(cookie);
-      await persistCookie(cookie);
-    } catch {
-      setView("choice");
-      setError("Auto detect failed. Choose another method.");
-    }
-  };
-
   const selectManualInput = () => {
     setView("manual");
     setError(null);
   };
 
-  const submitChoiceAt = (index: number) => {
-    setChoiceIndex(index);
-
-    if (index === 0) {
-      void autoDetectCookie();
-      return;
-    }
-
-    selectManualInput();
-  };
-
   const submitChoice = () => {
-    submitChoiceAt(choiceIndex());
-  };
-
-  const moveChoice = (direction: number) => {
-    setChoiceIndex((current) => {
-      const next = current + direction;
-      if (next < 0) {
-        return 1;
-      }
-
-      if (next > 1) {
-        return 0;
-      }
-
-      return next;
-    });
+    selectManualInput();
   };
 
   const submitManualCookie = () => {
@@ -97,27 +55,7 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
       return;
     }
 
-    if (view() === "choice" && (name === "up" || name === "k")) {
-      moveChoice(-1);
-      key.preventDefault();
-      return;
-    }
-
-    if (view() === "choice" && (name === "down" || name === "j")) {
-      moveChoice(1);
-      key.preventDefault();
-      return;
-    }
-
-    if (view() === "choice" && name === "a") {
-      setChoiceIndex(0);
-      void autoDetectCookie();
-      key.preventDefault();
-      return;
-    }
-
     if (view() === "choice" && name === "m") {
-      setChoiceIndex(1);
       selectManualInput();
       key.preventDefault();
       return;
@@ -167,7 +105,6 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
         title="Authentication"
       >
         <AuthBody
-          choiceIndex={choiceIndex()}
           cookieInput={cookieInput()}
           error={error()}
           onCookieInput={setCookieInput}
@@ -179,7 +116,7 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
 
       <box height={1}>
         <text fg={props.palette.muted}>
-          Up/Down choose   Enter select   A auto detect   M manual input   Q quit
+          Enter continue   M manual input   Q quit
         </text>
       </box>
     </box>
@@ -187,7 +124,6 @@ export function AuthGate(props: AuthGateProps): OpenTUIElement {
 }
 
 type AuthBodyProps = {
-  choiceIndex: number;
   cookieInput: string;
   error: string | null;
   onCookieInput: (value: string) => void;
@@ -199,24 +135,13 @@ type AuthBodyProps = {
 function AuthBody(props: AuthBodyProps): OpenTUIElement {
   return (
     <Switch>
-      <Match when={props.view === "auto"}>
-        <box flexDirection="column" gap={1}>
-          <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
-            Auto detecting browser cookie...
-          </text>
-          <text fg={props.palette.muted}>
-            Mock mode: this simulates reading a local browser session.
-          </text>
-        </box>
-      </Match>
-
       <Match when={props.view === "validating"}>
         <box flexDirection="column" gap={1}>
           <text attributes={TextAttributes.BOLD} fg={props.palette.fg}>
             Validating cookie...
           </text>
           <text fg={props.palette.muted}>
-            Mock mode: any non-empty cookie is accepted.
+            Saving cookie and validating local session state.
           </text>
         </box>
       </Match>
@@ -250,62 +175,19 @@ function AuthBody(props: AuthBodyProps): OpenTUIElement {
             No stored cookie found
           </text>
           <text fg={props.palette.muted}>
-            Choose how to provide a Nutstore browser cookie.
+            Manual input is the only available authentication method right now.
           </text>
-
-          <AuthChoiceList
-            choiceIndex={props.choiceIndex}
-            palette={props.palette}
-          />
+          <text fg={props.palette.fg}>
+            Press Enter to paste a Cookie header manually.
+          </text>
+          <text fg={props.palette.muted}>
+            Automatic browser cookie detection is hidden until the experimental flow is ready.
+          </text>
 
           <AuthError error={props.error} palette={props.palette} />
         </box>
       </Match>
     </Switch>
-  );
-}
-
-const AUTH_CHOICES = [
-  {
-    name: "Auto detect",
-    description: "Mock browser cookie discovery, then continue",
-  },
-  {
-    name: "Manual input",
-    description: "Paste a Cookie header yourself",
-  },
-];
-
-function AuthChoiceList(props: {
-  choiceIndex: number;
-  palette: Palette;
-}): OpenTUIElement {
-  return (
-    <box flexDirection="column" height={5} width={56}>
-      <For each={AUTH_CHOICES}>
-        {(choice, index) => {
-          const selected = () => props.choiceIndex === index();
-          const bg = () =>
-            selected() ? props.palette.selectedBg : "transparent";
-          const fg = () =>
-            selected() ? props.palette.selectedFg : props.palette.fg;
-          const mutedFg = () =>
-            selected() ? props.palette.selectedFg : props.palette.muted;
-
-          return (
-            <box flexDirection="column">
-              <text bg={bg()} fg={fg()}>
-                {selected() ? ">" : " "} {choice.name}
-              </text>
-              <text bg={bg()} fg={mutedFg()} truncate>
-                {"  "}
-                {choice.description}
-              </text>
-            </box>
-          );
-        }}
-      </For>
-    </box>
   );
 }
 
