@@ -7,10 +7,10 @@ import { WEBDAV_URL } from "../constants";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
 import { clamp, copyToClipboard } from "../utils";
-import { Footer } from "./Footer";
-import { Header } from "./Header";
-import { SecretDetail } from "./SecretDetail";
-import { SecretList } from "./SecretList";
+import { Footer } from "./footer";
+import { Header } from "./header";
+import { SecretDetail } from "./secret-detail";
+import { SecretList } from "./secret-list";
 
 type SecretsPageProps = {
   palette: Palette;

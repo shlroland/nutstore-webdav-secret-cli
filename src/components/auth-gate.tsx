@@ -5,7 +5,7 @@ import { Match, Show, Switch, createSignal } from "solid-js";
 import { saveCookieAtom } from "../atom/auth";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
-import { NutstoreLogo } from "./NutstoreLogo";
+import { NutstoreLogo } from "./nutstore-logo";
 
 export type AuthView = "choice" | "manual" | "validating";
 

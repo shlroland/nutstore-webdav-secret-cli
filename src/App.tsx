@@ -1,7 +1,7 @@
 import { useAtomValue } from "@effect/atom-solid";
 import { Match, Switch, createMemo } from "solid-js";
-import { AuthGate } from "./components/AuthGate";
-import { SecretsPage } from "./components/SecretsPage";
+import { AuthGate } from "./components/auth-gate";
+import { SecretsPage } from "./components/secrets-page";
 import { authStateAtom, cookieAtom } from "./atom/auth";
 import { useThemeMode } from "./hooks/useThemeMode";
 import type { OpenTUIElement } from "./opentui-jsx";

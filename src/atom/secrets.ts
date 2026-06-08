@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import { MobileAspHttpError, MobileAspParseError, querySecretsList } from "../effect/secrets";
+import { MobileAspHttpError, MobileAspParseError, querySecretsList } from "../effect/list-secrets";
 import type { SecretItem } from "../types";
 import { cookieAtom } from "./auth";
 import { runtimeAtom } from "./platform";

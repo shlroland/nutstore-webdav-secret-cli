@@ -1,7 +1,7 @@
 import { TextAttributes, type ThemeMode } from "@opentui/core";
 import type { OpenTUIElement } from "../opentui-jsx";
 import type { Palette } from "../theme";
-import { NutstoreLogo } from "./NutstoreLogo";
+import { NutstoreLogo } from "./nutstore-logo";
 
 type HeaderProps = {
   count: number;
