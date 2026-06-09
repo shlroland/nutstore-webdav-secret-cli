@@ -12,7 +12,14 @@
 npm i -g nutstore-webdav-secret-cli
 ```
 
-运行：
+直接运行：
+
+```bash
+npx nutstore-webdav-secret-cli
+bunx nutstore-webdav-secret-cli
+```
+
+全局安装后也可以用短命令：
 
 ```bash
 nswds
@@ -21,7 +28,7 @@ nswds
 注意：
 
 - 这是 Bun CLI，机器上需要先安装 Bun
-- npm 包当前分发的是源码入口，不是跨平台预编译二进制
+- npm 包当前分发的是预构建 JS，不是跨平台预编译二进制
 - 如果你不想全局安装，也可以直接用源码开发模式
 
 ## 开发
@@ -63,13 +70,17 @@ bun run debug
 
 ## 本地发布
 
-这个项目现在支持本地编译成单文件 CLI 可执行物。
+这个项目支持两种本地产物：
+
+- npm 发布用的 Bun JS bundle
+- 本地单文件二进制
 
 构建走的是：
 
 - `Bun.build(...)`
 - `@opentui/solid/bun-plugin`
-- `compile.target` 根据当前本机平台自动推断
+- JS bundle 默认输出到 `dist/cli.js`
+- 二进制模式下 `compile.target` 根据当前本机平台自动推断
 
 类型检查：
 
@@ -77,22 +88,35 @@ bun run debug
 bun run typecheck
 ```
 
-构建本地二进制：
+构建 npm 发布用 JS：
 
 ```bash
 bun run build
 ```
 
+运行 JS 产物：
+
+```bash
+bun run run:dist
+```
+
+构建本地二进制：
+
+```bash
+bun run build:bin
+```
+
 产物路径：
 
 ```bash
+./dist/cli.js
 ./dist/nswds
 ```
 
 运行已构建二进制：
 
 ```bash
-bun run run:dist
+bun run run:bin
 ```
 
 本地发布流程：
@@ -105,6 +129,12 @@ bun run release:local
 
 - `bun run typecheck`
 - `bun run build`
+
+如果你要本地出单文件二进制：
+
+```bash
+bun run release:local:bin
+```
 
 如果你想手动指定目标平台，可以覆盖：
 
@@ -136,9 +166,9 @@ npm publish --access public
 
 当前 `package.json` 已经配置：
 
-- `bin.nswds -> ./src/cli.tsx`
+- `bin.nswds -> ./dist/cli.js`
 - `publishConfig.access = public`
-- `prepublishOnly` 会先跑类型检查和 `npm pack --dry-run`
+- `prepublishOnly` 会先跑类型检查、构建 JS bundle 和 `npm pack --dry-run`
 
 ## GitHub 发布流
 
