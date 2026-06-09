@@ -79,7 +79,8 @@ bun run debug
 
 - `Bun.build(...)`
 - `@opentui/solid/bun-plugin`
-- JS bundle 默认输出到 `dist/cli.js`
+- JS 入口 wrapper 输出到 `dist/cli.js`
+- 主 bundle 输出到 `dist/main.js`
 - 二进制模式下 `compile.target` 根据当前本机平台自动推断
 
 类型检查：
@@ -110,6 +111,7 @@ bun run build:bin
 
 ```bash
 ./dist/cli.js
+./dist/main.js
 ./dist/nswds
 ```
 
