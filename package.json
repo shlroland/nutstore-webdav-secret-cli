@@ -1,13 +1,57 @@
 {
   "name": "nutstore-webdav-secret-cli",
-  "module": "src/index.tsx",
+  "version": "0.1.0",
+  "description": "Terminal UI for managing Nutstore WebDAV app passwords.",
+  "license": "MIT",
   "type": "module",
-  "private": true,
+  "private": false,
+  "author": "shlroland <shlroland1995@gmail.com>",
+  "homepage": "https://github.com/shlroland/nutstore-webdav-secret-cli#readme",
+  "bugs": {
+    "url": "https://github.com/shlroland/nutstore-webdav-secret-cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shlroland/nutstore-webdav-secret-cli.git"
+  },
+  "keywords": [
+    "nutstore",
+    "webdav",
+    "cli",
+    "tui",
+    "bun",
+    "opentui"
+  ],
+  "bin": {
+    "nswds": "./src/cli.tsx"
+  },
+  "files": [
+    "src",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
   "scripts": {
-    "dev": "bun run --watch src/index.tsx",
-    "debug": "OTUI_USE_ALTERNATE_SCREEN=false OTUI_USE_CONSOLE=true SHOW_CONSOLE=true bun run --watch src/index.tsx"
+    "dev": "bun run --watch src/cli.tsx",
+    "debug": "OTUI_USE_ALTERNATE_SCREEN=false OTUI_USE_CONSOLE=true SHOW_CONSOLE=true bun run --watch src/cli.tsx",
+    "typecheck": "bunx tsc --noEmit --pretty false",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "build": "mkdir -p dist && bun run ./scripts/build.ts",
+    "run:dist": "./dist/nswds",
+    "release:local": "bun run typecheck && bun run build",
+    "pack:check": "mkdir -p .cache/npm && npm_config_cache=./.cache/npm npm pack --dry-run",
+    "release:npm": "npm publish --access public",
+    "prepublishOnly": "bun run typecheck && bun run pack:check"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@types/bun": "latest"
   },
   "peerDependencies": {
