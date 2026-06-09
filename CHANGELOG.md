@@ -1,5 +1,11 @@
 # nutstore-webdav-secret-cli
 
+## 0.4.0
+
+### Minor Changes
+
+- d9e75b6: Fix the compiled CLI runtime so the npm-distributed `dist` entry boots reliably with OpenTUI preload and advances past stored-cookie initialization like the development entrypoint.
+
 ## 0.3.0
 
 ### Minor Changes
