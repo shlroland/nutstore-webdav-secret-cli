@@ -23,11 +23,11 @@
     "opentui"
   ],
   "bin": {
-    "nswds": "./src/cli.tsx"
+    "nutstore-webdav-secret-cli": "./dist/cli.js",
+    "nswds": "./dist/cli.js"
   },
   "files": [
-    "src",
-    "scripts",
+    "dist/cli.js",
     "README.md",
     "LICENSE"
   ],
@@ -44,14 +44,18 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "build": "mkdir -p dist && bun run ./scripts/build.ts",
-    "run:dist": "./dist/nswds",
+    "build:bin": "mkdir -p dist && BUILD_MODE=compile bun run ./scripts/build.ts",
+    "run:dist": "bun ./dist/cli.js",
+    "run:bin": "./dist/nswds",
     "release:local": "bun run typecheck && bun run build",
-    "pack:check": "mkdir -p .cache/npm && npm_config_cache=./.cache/npm npm pack --dry-run",
+    "release:local:bin": "bun run typecheck && bun run build:bin",
+    "pack:check": "bun run build && mkdir -p .cache/npm && npm_config_cache=./.cache/npm npm pack --dry-run",
     "release:npm": "npm publish --access public",
     "prepublishOnly": "bun run typecheck && bun run pack:check"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
+    "@types/babel__core": "^7.20.5",
     "@types/bun": "latest"
   },
   "peerDependencies": {

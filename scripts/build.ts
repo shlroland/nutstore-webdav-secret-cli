@@ -1,28 +1,41 @@
 import solidPlugin from "@opentui/solid/bun-plugin";
 
 const APP_NAME = "nswds";
+const BUILD_MODE = process.env.BUILD_MODE ?? "bundle";
+const runBuild = Bun.build as (config: unknown) => Promise<unknown>;
+if (BUILD_MODE === "compile") {
+  const target =
+    (process.env.BUILD_TARGET as BuildTarget | undefined) ?? inferBuildTarget();
+  const outfile = process.env.BUILD_OUTFILE ?? `dist/${APP_NAME}`;
 
-type BuildTarget =
-  | "bun-darwin-arm64"
-  | "bun-darwin-x64"
-  | "bun-linux-arm64"
-  | "bun-linux-x64"
-  | "bun-windows-arm64"
-  | "bun-windows-x64";
+  await runBuild({
+    entrypoints: ["./src/cli.tsx"],
+    plugins: [solidPlugin],
+    compile: {
+      target,
+      outfile,
+    },
+  });
 
-const target = (process.env.BUILD_TARGET as BuildTarget | undefined) ?? inferBuildTarget();
-const outfile = process.env.BUILD_OUTFILE ?? `dist/${APP_NAME}`;
+  console.log(`Built ${outfile} for ${target}`);
+} else {
+  const outdir = process.env.BUILD_OUTDIR ?? "dist";
 
-await Bun.build({
-  entrypoints: ["./src/cli.tsx"],
-  plugins: [solidPlugin],
-  compile: {
-    target,
-    outfile,
-  },
-});
+  await runBuild({
+    entrypoints: ["./src/cli.tsx"],
+    plugins: [solidPlugin],
+    target: "bun",
+    format: "esm",
+    minify: true,
+    packages: "external",
+    outdir,
+    naming: {
+      entry: "[name].js",
+    },
+  });
 
-console.log(`Built ${outfile} for ${target}`);
+  console.log(`Built ${outdir}/cli.js for npm distribution`);
+}
 
 function inferBuildTarget(): BuildTarget {
   const platform = process.platform;
@@ -54,3 +67,11 @@ function inferBuildTarget(): BuildTarget {
 
   throw new Error(`Unsupported build target for ${platform}-${arch}`);
 }
+
+type BuildTarget =
+  | "bun-darwin-arm64"
+  | "bun-darwin-x64"
+  | "bun-linux-arm64"
+  | "bun-linux-x64"
+  | "bun-windows-arm64"
+  | "bun-windows-x64";
