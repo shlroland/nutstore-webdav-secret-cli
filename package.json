@@ -1,6 +1,6 @@
 {
   "name": "nutstore-webdav-secret-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Terminal UI for managing Nutstore WebDAV app passwords.",
   "license": "MIT",
   "type": "module",
