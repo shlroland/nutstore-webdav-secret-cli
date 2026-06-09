@@ -21,9 +21,9 @@ export const readCookie = Effect.gen(function* () {
   const { configDir, configFile } = yield* resolveConfigPaths
   const fs = yield* FileSystem
   const fileContent = yield* fs.readFileString(configFile).pipe(
-    Effect.catchTag("PlatformError", err => {
-      return new CookieNotFoundError()
-    })
+    Effect.catchTag("PlatformError", () =>
+      Effect.fail(new CookieNotFoundError())
+    )
   )
 
   if (!fileContent || !fileContent.trim()) {

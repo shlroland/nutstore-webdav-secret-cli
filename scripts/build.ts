@@ -1,4 +1,5 @@
 import solidPlugin from "@opentui/solid/bun-plugin";
+import { writeFile } from "node:fs/promises";
 
 const APP_NAME = "nswds";
 const BUILD_MODE = process.env.BUILD_MODE ?? "bundle";
@@ -20,9 +21,11 @@ if (BUILD_MODE === "compile") {
   console.log(`Built ${outfile} for ${target}`);
 } else {
   const outdir = process.env.BUILD_OUTDIR ?? "dist";
+  const appOutfile = `${outdir}/main.js`;
+  const cliOutfile = `${outdir}/cli.js`;
 
   await runBuild({
-    entrypoints: ["./src/cli.tsx"],
+    entrypoints: ["./src/main.tsx"],
     plugins: [solidPlugin],
     target: "bun",
     format: "esm",
@@ -34,7 +37,18 @@ if (BUILD_MODE === "compile") {
     },
   });
 
-  console.log(`Built ${outdir}/cli.js for npm distribution`);
+  await writeFile(
+    cliOutfile,
+    [
+      "#!/usr/bin/env bun",
+      "",
+      'import "@opentui/solid/preload";',
+      'await import("./main.js");',
+      "",
+    ].join("\n"),
+  );
+
+  console.log(`Built ${cliOutfile} and ${appOutfile} for npm distribution`);
 }
 
 function inferBuildTarget(): BuildTarget {
