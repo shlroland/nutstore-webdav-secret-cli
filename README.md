@@ -2,6 +2,9 @@
 
 一个基于 Bun、Solid 和 OpenTUI 的终端工具，用来查看和管理坚果云 WebDAV 第三方应用密码。
 
+当前项目主要用于测试和学习 OpenTUI。
+由于 OpenTUI 目前实际运行依赖 Bun，这个 CLI 现在也只支持通过 Bun 启动。
+
 ## 安装
 
 - Bun `1.3+`
@@ -12,10 +15,9 @@
 npm i -g nutstore-webdav-secret-cli
 ```
 
-直接运行：
+推荐直接运行：
 
 ```bash
-npx nutstore-webdav-secret-cli
 bunx nutstore-webdav-secret-cli
 ```
 
@@ -27,7 +29,8 @@ nswds
 
 注意：
 
-- 这是 Bun CLI，机器上需要先安装 Bun
+- 这是 Bun CLI，机器上必须先安装 Bun
+- 当前不要用 `node dist/cli.js` 或 `npx` 方式运行
 - npm 包当前分发的是预构建 JS，不是跨平台预编译二进制
 - 如果你不想全局安装，也可以直接用源码开发模式
 
